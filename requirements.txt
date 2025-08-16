@@ -1,0 +1,27 @@
+# SQLBridgeMCP - Dependencias del Proyecto
+# Versiones actualizadas para Python 3.13.7
+
+# Framework MCP (última versión)
+mcp>=1.13.0
+
+# Base de datos y ORM
+sqlalchemy>=2.0.36
+psycopg[binary]>=3.2.3    # PostgreSQL driver
+aiomysql>=0.2.0          # MySQL driver
+aiosqlite>=0.20.0        # SQLite driver
+
+# Validación y configuración
+pydantic>=2.10.3
+python-dotenv>=1.0.1
+
+# Web framework (opcional para API REST)
+fastapi>=0.115.6
+uvicorn>=0.32.1
+
+# Testing
+pytest>=8.3.4
+pytest-asyncio>=0.25.0
+
+# Utilidades adicionales
+redis>=5.2.1             # Cache y rate limiting
+prometheus-client>=0.21.1 # Métricas y monitoreo
