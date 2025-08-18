@@ -9,6 +9,8 @@ sqlalchemy>=2.0.36
 psycopg[binary]>=3.2.3    # PostgreSQL driver
 aiomysql>=0.2.0          # MySQL driver
 aiosqlite>=0.20.0        # SQLite driver
+pyodbc>=5.0.1            # SQL Server driver (sync)
+aioodbc>=0.5.0           # SQL Server async driver
 
 # Validación y configuración
 pydantic>=2.10.3
