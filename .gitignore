@@ -81,3 +81,7 @@ docs/_build/
 *.tmp
 *.temp
 *~
+
+# Private documentation and setup files
+GUIA_COMPLETA_MCP_SQL.md
+CLAUDE_CODE_SETUP.md
