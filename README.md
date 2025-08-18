@@ -53,7 +53,33 @@ DB_USER=myuser
 DB_PASSWORD=mypass
 ```
 
-### 3. **Connect to Claude Code**
+### 3. **Connect to your AI tool**
+
+Choose your AI platform and follow the specific setup:
+
+## **🤖 Claude Code (Desktop App)**
+
+**A. Using Claude CLI (Recommended):**
+```bash
+# Add MCP server with CONNECTION_STRING
+claude add mcp sql-bridge \
+  --command "python" \
+  --args "/path/to/SQLBridgeMCP/main.py" \
+  --env DB_TYPE=sqlserver \
+  --env CONNECTION_STRING="Server=localhost;Database=mydb;User Id=user;Password=pass;TrustServerCertificate=true"
+
+# Or with individual variables
+claude add mcp sql-bridge \
+  --command "python" \
+  --args "/path/to/SQLBridgeMCP/main.py" \
+  --env DB_TYPE=postgresql \
+  --env DB_HOST=localhost \
+  --env DB_NAME=mydb \
+  --env DB_USER=myuser \
+  --env DB_PASSWORD=mypass
+```
+
+**B. Manual config in `claude_desktop_config.json`:**
 
 **🚀 With CONNECTION_STRING:**
 ```json
@@ -88,6 +114,72 @@ DB_PASSWORD=mypass
     }
   }
 }
+```
+
+**B. Restart Claude Code completely**
+- Close Claude Code entirely
+- Reopen Claude Code
+- The MCP server will initialize automatically
+
+**C. Restart & Verify:**
+- Close Claude Code entirely → Reopen
+- Look for the 🔌 MCP icon in Claude Code
+- Try: *"What MCP tools are available?"*
+
+## **🌐 Claude API (Programmatic)**
+
+```python
+import anthropic
+from mcp_client import MCPClient
+
+# Start MCP server
+mcp = MCPClient(server_path="./main.py")
+
+# Use with Claude API
+client = anthropic.Anthropic(api_key="your-key")
+message = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1000,
+    messages=[{"role": "user", "content": "How many active employees?"}],
+    tools=mcp.get_tools()  # Pass MCP tools
+)
+```
+
+## **🔧 VS Code (with MCP Extensions)**
+
+```bash
+# Install MCP extension for VS Code
+code --install-extension mcp-integration
+
+# Add to VS Code settings.json
+{
+  "mcp.servers": {
+    "sql-bridge": {
+      "command": "python",
+      "args": ["/path/to/SQLBridgeMCP/main.py"],
+      "env": {
+        "DB_TYPE": "sqlserver",
+        "CONNECTION_STRING": "your-connection-string"
+      }
+    }
+  }
+}
+```
+
+## **🤖 Other MCP-Compatible Clients**
+
+**For any MCP client, use standard MCP protocol:**
+```bash
+# Start the server
+python /path/to/SQLBridgeMCP/main.py
+
+# The server exposes these MCP tools:
+# - execute_sql_query
+# - list_tables  
+# - describe_table
+# - database_health
+# - list_all_databases
+# - list_tables_from_database
 ```
 
 ### 4. **Start chatting with your data!**
@@ -259,19 +351,63 @@ DB_NAME=/path/to/database.db
 2. **Individual variables** (DB_HOST, DB_USER, etc.)
 3. **Error** if neither is configured
 
+## 🛠️ Troubleshooting
+
+### **MCP Not Connecting?**
+1. **Restart Claude Code completely** (close & reopen)
+2. Check your `claude_desktop_config.json` syntax
+3. Verify the path to `main.py` is correct (use full absolute path)
+4. Ensure your `.env` file has correct credentials
+
+### **Database Connection Issues?**
+1. Test your CONNECTION_STRING/credentials outside MCP first
+2. Check if your database server is running
+3. Verify firewall/network access to database
+4. Use individual variables if CONNECTION_STRING fails
+
+### **Python/Dependencies Issues?**
+```bash
+# Verify Python and dependencies
+python --version  # Should be 3.11+
+pip install -r requirements.txt
+python main.py  # Test server directly
+```
+
+### **Common Fixes:**
+- **"No MCP icon"**: Restart Claude Code completely  
+- **"Connection failed"**: Check database credentials
+- **"Python not found"**: Use full path to python in config
+- **"Module not found"**: Run `pip install -r requirements.txt`
+
 ## 🆘 Support
 
-- **📚 Documentation**: See `GUIA_COMPLETA_MCP_SQL.md` for detailed setup
 - **🐛 Issues**: Report problems via GitHub Issues  
 - **💬 Questions**: Start a discussion in GitHub Discussions
+- **📧 Direct support**: Check repository for contact info
 
-## 🔗 Compatible MCP Clients
+## 🔗 Tested MCP Clients
 
-- **Claude Code** - Desktop app with native MCP support
-- **Claude API** - Programmatic access via API
-- **Custom Apps** - Any application implementing MCP protocol
-- **VS Code Extensions** - With MCP support
-- **Enterprise Tools** - Internal AI assistants
+| Platform | Setup Method | Status | Command |
+|----------|-------------|---------|---------|
+| **Claude Code** | `claude add mcp` | ✅ Verified | `claude add mcp sql-bridge --command python --args /path/main.py` |
+| **Claude API** | Python SDK | ✅ Supported | Use `anthropic` library with MCP tools |
+| **VS Code** | Extension | 🔄 Community | Install `mcp-integration` extension |
+| **Custom Apps** | MCP Protocol | ✅ Standard | Implement MCP client specification |
+| **OpenAI Compatible** | MCP Bridge | 🔄 Possible | Via MCP-to-OpenAI bridge tools |
+| **Enterprise Tools** | Configuration | ✅ Flexible | Custom MCP client integration |
+
+### **Quick Setup Commands:**
+
+```bash
+# Claude Code (Primary)
+claude add mcp sql-bridge --command python --args /path/to/main.py --env DB_TYPE=sqlserver --env CONNECTION_STRING="your-string"
+
+# Manual test (any platform)
+python /path/to/SQLBridgeMCP/main.py
+
+# Verify tools available
+curl -X POST http://localhost:3000/mcp/list_tools
+```
 
 ---
 
