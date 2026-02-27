@@ -28,9 +28,32 @@ git clone <this-repo>
 cd SQLBridgeMCP
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# or venv\Scripts\activate  # Windows
+venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
+
+#### What is `pip install -r requirements.txt` and why is it needed?
+
+Python doesn't come with everything pre-installed. This project depends on external libraries that need to be downloaded once before it can run. The `requirements.txt` file is just a list of those libraries with their minimum versions. Running `pip install -r requirements.txt` reads that list and installs all of them automatically.
+
+**What gets installed:**
+
+| Package | Why it's needed |
+|---|---|
+| `mcp` | The MCP protocol framework — this IS the server that Claude Code talks to |
+| `sqlalchemy` | Unified interface to connect and query any SQL database |
+| `pyodbc` / `aioodbc` | Drivers to connect specifically to SQL Server |
+| `psycopg` | Driver to connect to PostgreSQL |
+| `aiomysql` | Driver to connect to MySQL |
+| `aiosqlite` | Driver to connect to SQLite |
+| `pydantic` | Validates configuration values (catches bad credentials early) |
+| `python-dotenv` | Reads your `.env` file so you don't have to set variables manually |
+| `fastapi` / `uvicorn` | Optional REST API layer if you want to expose the server over HTTP |
+| `pytest` | Only needed if you want to run the test suite |
+| `redis` | Optional cache and rate limiting |
+| `prometheus-client` | Optional metrics and monitoring |
+
+> **You only need to run this once** per machine. After that the libraries are stored in the `venv` folder and available every time you start the server.
 
 ### 2. **Configure your database** (Choose one method)
 
@@ -57,74 +80,73 @@ DB_PASSWORD=mypass
 
 Choose your AI platform and follow the specific setup:
 
-## **🤖 Claude Code (Desktop App)**
+## **🤖 Claude Code**
 
-**A. Using Claude CLI (Recommended):**
+### **⚡ Option A: Setup Script (Recommended)**
+
+The script handles everything automatically: creates the virtual environment, installs dependencies, and registers the MCP server globally in Claude Code.
+
+**Step 1:** Copy the example script and rename it:
+```
+setup_mcp.example.bat  →  setup_mcp.bat
+```
+
+**Step 2:** Open `setup_mcp.bat` and fill in your credentials:
+```bat
+set "DB_HOST=your-server.database.windows.net"
+set "DB_NAME=your-database-name"
+set "DB_USER=your-username"
+set "DB_PASSWORD=your-password"
+```
+
+**Step 3:** Double-click `setup_mcp.bat` — the script will:
+- Verify Python is installed
+- Create the `venv` if it doesn't exist
+- Install all dependencies from `requirements.txt`
+- Register `sql-bridge` in Claude Code at user scope (`-s user`)
+
+**Step 4:** Restart Claude Code completely (close and reopen).
+
+**Step 5:** Test it:
+```
+Can you check the health of my SQL database?
+```
+
+> `setup_mcp.bat` is in `.gitignore` so your real credentials are never committed.
+
+---
+
+### **Option B: Manual CLI command**
+
+If you prefer to set up manually, first create the venv and install dependencies:
+
 ```bash
-# Add MCP server with CONNECTION_STRING
-claude add mcp sql-bridge \
-  --command "python" \
-  --args "/path/to/SQLBridgeMCP/main.py" \
-  --env DB_TYPE=sqlserver \
-  --env CONNECTION_STRING="Server=localhost;Database=mydb;User Id=user;Password=pass;TrustServerCertificate=true"
-
-# Or with individual variables
-claude add mcp sql-bridge \
-  --command "python" \
-  --args "/path/to/SQLBridgeMCP/main.py" \
-  --env DB_TYPE=postgresql \
-  --env DB_HOST=localhost \
-  --env DB_NAME=mydb \
-  --env DB_USER=myuser \
-  --env DB_PASSWORD=mypass
+cd SQLBridgeMCP
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-**B. Manual config in `claude_desktop_config.json`:**
+Then register the MCP server at user scope (available in all projects):
 
-**🚀 With CONNECTION_STRING:**
-```json
-{
-  "mcpServers": {
-    "sql-bridge": {
-      "command": "python",
-      "args": ["/path/to/SQLBridgeMCP/main.py"],
-      "env": {
-        "DB_TYPE": "sqlserver",
-        "CONNECTION_STRING": "Server=your-server;Database=your-db;User Id=user;Password=pass;TrustServerCertificate=true"
-      }
-    }
-  }
-}
+```bash
+claude mcp add sql-bridge \
+  "C:\path\to\SQLBridgeMCP\venv\Scripts\python.exe" \
+  "C:\path\to\SQLBridgeMCP\main.py" \
+  -s user \
+  -e DB_TYPE=sqlserver \
+  -e DB_HOST=your-server.database.windows.net \
+  -e DB_PORT=1433 \
+  -e DB_NAME=your-database \
+  -e DB_USER=your-user \
+  -e DB_PASSWORD=your-password
 ```
 
-**🔧 Or with individual variables:**
-```json
-{
-  "mcpServers": {
-    "sql-bridge": {
-      "command": "python", 
-      "args": ["/path/to/SQLBridgeMCP/main.py"],
-      "env": {
-        "DB_TYPE": "postgresql",
-        "DB_HOST": "your-server",
-        "DB_NAME": "your-database",
-        "DB_USER": "your-user",
-        "DB_PASSWORD": "your-password"
-      }
-    }
-  }
-}
-```
+> The `-s user` flag registers the server globally for your user (`~/.claude.json`), so it is available in every project — not just the folder where the command is run.
 
-**B. Restart Claude Code completely**
-- Close Claude Code entirely
-- Reopen Claude Code
-- The MCP server will initialize automatically
-
-**C. Restart & Verify:**
+**Restart & Verify:**
 - Close Claude Code entirely → Reopen
-- Look for the 🔌 MCP icon in Claude Code
-- Try: *"What MCP tools are available?"*
+- Test: *"Can you check the health of my SQL database?"*
 
 ## **🌐 Claude API (Programmatic)**
 
@@ -399,14 +421,12 @@ python main.py  # Test server directly
 ### **Quick Setup Commands:**
 
 ```bash
-# Claude Code (Primary)
-claude add mcp sql-bridge --command python --args /path/to/main.py --env DB_TYPE=sqlserver --env CONNECTION_STRING="your-string"
+# Easiest (Windows): copy template, fill credentials, double-click
+cp setup_mcp.example.bat setup_mcp.bat
+# edit setup_mcp.bat with your credentials, then run it
 
 # Manual test (any platform)
 python /path/to/SQLBridgeMCP/main.py
-
-# Verify tools available
-curl -X POST http://localhost:3000/mcp/list_tools
 ```
 
 ---

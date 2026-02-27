@@ -85,3 +85,7 @@ docs/_build/
 # Private documentation and setup files
 GUIA_COMPLETA_MCP_SQL.md
 CLAUDE_CODE_SETUP.md
+
+# Personal setup scripts with real credentials (use setup_mcp.example.bat as template)
+setup_mcp.bat
+setup_mcp_simple.bat
