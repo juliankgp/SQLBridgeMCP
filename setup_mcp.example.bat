@@ -29,28 +29,56 @@ echo  Python      : %PYTHON_EXE%
 echo  Main script : %MAIN_PY%
 echo.
 
-:: Verify venv exists
-if not exist "%PYTHON_EXE%" (
-    echo [ERROR] Python venv not found.
-    echo.
-    echo Please run these commands first:
-    echo   python -m venv venv
-    echo   venv\Scripts\activate
-    echo   pip install -r requirements.txt
-    echo.
-    pause
-    exit /b 1
-)
+:: ============================================================
+::  STEP 1: Verify Python is installed
+:: ============================================================
 
-:: Verify main.py exists
-if not exist "%MAIN_PY%" (
-    echo [ERROR] main.py not found at: %MAIN_PY%
-    pause
-    exit /b 1
+python --version >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Python not found in PATH.
+    echo Download it from: https://www.python.org/downloads/
+    pause & exit /b 1
 )
 
 :: ============================================================
-::  STEP 1: Fill in your database credentials below
+::  STEP 2: Create venv if it doesn't exist
+:: ============================================================
+
+if not exist "%PYTHON_EXE%" (
+    echo [INFO] Creating virtual environment...
+    python -m venv "%PROJECT_DIR%\venv"
+    if %ERRORLEVEL% NEQ 0 (
+        echo [ERROR] Failed to create venv.
+        pause & exit /b 1
+    )
+    echo [OK] Venv created.
+    echo.
+)
+
+:: ============================================================
+::  STEP 3: Install dependencies
+:: ============================================================
+
+echo [INFO] Installing dependencies...
+"%PYTHON_EXE%" -m pip install -r "%PROJECT_DIR%\requirements.txt" --quiet
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] pip install failed. Check requirements.txt.
+    pause & exit /b 1
+)
+echo [OK] Dependencies installed.
+echo.
+
+:: ============================================================
+::  STEP 4: Verify main.py exists
+:: ============================================================
+
+if not exist "%MAIN_PY%" (
+    echo [ERROR] main.py not found at: %MAIN_PY%
+    pause & exit /b 1
+)
+
+:: ============================================================
+::  STEP 5: Fill in your database credentials below
 :: ============================================================
 
 set "DB_TYPE=sqlserver"
@@ -62,7 +90,7 @@ set "DB_PASSWORD=your-password"
 
 :: ============================================================
 
-echo Registering MCP server in Claude Code...
+echo [INFO] Registering MCP server in Claude Code...
 echo.
 
 claude mcp add sql-bridge "%PYTHON_EXE%" "%MAIN_PY%" -s user ^
